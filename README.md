@@ -1,1 +1,0 @@
-# Homomorphic-Encryption-on-Logistic-Regression
