@@ -1,3 +1,17 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:da4de3f34cf0ee0cc8d2ee7fa102d7a11feadeba679957bbb53b411b340bd884
-size 635
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ProjectOutputs>
+    <ProjectOutput>
+      <FullPath>E:\Code Projects\Homomorphic-Encryption-on-Logistic-Regression\x64\Release\ZERO_CHECK</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>E:\Code Projects\Homomorphic-Encryption-on-Logistic-Regression\Release\main.exe</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>E:\Code Projects\Homomorphic-Encryption-on-Logistic-Regression\x64\Release\ALL_BUILD</FullPath>
+    </ProjectOutput>
+  </ProjectOutputs>
+  <ContentFiles />
+  <SatelliteDlls />
+  <NonRecipeFileRefs />
+</Project>

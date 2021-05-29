@@ -1,3 +1,2 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:6499625c8eb30ef26f9511c77bc816c8ff6970b8d522ffa9ec097e8c9518a7a7
-size 234
+PlatformToolSet=v142:VCToolArchitecture=Native64Bit:VCToolsVersion=14.28.29910:VCServicingVersionCompilers=14.28.29915:TargetPlatformVersion=10.0.19041.0:
+Release|x64|E:\Code Projects\Homomorphic-Encryption-on-Logistic-Regression\|

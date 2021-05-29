@@ -1,0 +1,88 @@
+{
+	"kind" : "toolchains",
+	"toolchains" : 
+	[
+		{
+			"compiler" : 
+			{
+				"id" : "GNU",
+				"implicit" : 
+				{
+					"includeDirectories" : 
+					[
+						"D:/MSYS2 64bit/mingw64/lib/gcc/x86_64-w64-mingw32/10.2.0/include",
+						"D:/MSYS2 64bit/mingw64/include",
+						"D:/MSYS2 64bit/mingw64/lib/gcc/x86_64-w64-mingw32/10.2.0/include-fixed",
+						"D:/MSYS2 64bit/mingw64/x86_64-w64-mingw32/include"
+					],
+					"linkDirectories" : [],
+					"linkFrameworkDirectories" : [],
+					"linkLibraries" : []
+				},
+				"path" : "D:/MSYS2 64bit/mingw64/bin/x86_64-w64-mingw32-gcc.exe",
+				"version" : "10.2.0"
+			},
+			"language" : "C",
+			"sourceFileExtensions" : 
+			[
+				"c",
+				"m"
+			]
+		},
+		{
+			"compiler" : 
+			{
+				"id" : "GNU",
+				"implicit" : 
+				{
+					"includeDirectories" : 
+					[
+						"D:/MSYS2 64bit/mingw64/include/c++/10.2.0",
+						"D:/MSYS2 64bit/mingw64/include/c++/10.2.0/x86_64-w64-mingw32",
+						"D:/MSYS2 64bit/mingw64/include/c++/10.2.0/backward",
+						"D:/MSYS2 64bit/mingw64/lib/gcc/x86_64-w64-mingw32/10.2.0/include",
+						"D:/MSYS2 64bit/mingw64/include",
+						"D:/MSYS2 64bit/mingw64/lib/gcc/x86_64-w64-mingw32/10.2.0/include-fixed",
+						"D:/MSYS2 64bit/mingw64/x86_64-w64-mingw32/include"
+					],
+					"linkDirectories" : [],
+					"linkFrameworkDirectories" : [],
+					"linkLibraries" : []
+				},
+				"path" : "D:/MSYS2 64bit/mingw64/bin/x86_64-w64-mingw32-g++.exe",
+				"version" : "10.2.0"
+			},
+			"language" : "CXX",
+			"sourceFileExtensions" : 
+			[
+				"C",
+				"M",
+				"c++",
+				"cc",
+				"cpp",
+				"cxx",
+				"mm",
+				"mpp",
+				"CPP"
+			]
+		},
+		{
+			"compiler" : 
+			{
+				"implicit" : {},
+				"path" : "x86_64-w64-mingw32-windres"
+			},
+			"language" : "RC",
+			"sourceFileExtensions" : 
+			[
+				"rc",
+				"RC"
+			]
+		}
+	],
+	"version" : 
+	{
+		"major" : 1,
+		"minor" : 0
+	}
+}

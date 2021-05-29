@@ -1,0 +1,7 @@
+[
+{
+  "directory": "E:/Code Projects/Homomorphic-Encryption-on-Logistic-Regression/build",
+  "command": "\"D:\\MSYS2 64bit\\mingw64\\bin\\x86_64-w64-mingw32-g++.exe\" -isystem \"C:/Program Files (x86)/SEAL/include/SEAL-3.6\" -g -std=gnu++17 -o CMakeFiles\\main.dir\\src\\main.cpp.obj -c \"E:\\Code Projects\\Homomorphic-Encryption-on-Logistic-Regression\\src\\main.cpp\"",
+  "file": "E:/Code Projects/Homomorphic-Encryption-on-Logistic-Regression/src/main.cpp"
+}
+]
