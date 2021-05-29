@@ -113,9 +113,61 @@ void bfv_basics()
 
 void encoders()
 {
+    EncryptionParameters parms(scheme_type::ckks);
+
+    size_t poly_modulus_degree = 8192;
+    parms.set_poly_modulus_degree(poly_modulus_degree);
+    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {40, 40, 40, 40, 40}));
+
+    SEALContext context(parms);
+    print_parameters(context);
+    cout << endl;
+
+    KeyGenerator keygen(context);
+    SecretKey secret_key = keygen.secret_key();
+    PublicKey public_key;
+    keygen.create_public_key(public_key);
+    RelinKeys relin_keys;
+    keygen.create_relin_keys(relin_keys);
+
+    Encryptor encryptor(context, public_key);
+    Evaluator evaluator(context);
+    Decryptor decryptor(context, secret_key);
+
+    CKKSEncoder encoder(context);
+    size_t slot_count = encoder.slot_count();
+    cout << "# slots: " << slot_count << endl;
+
+    vector<double> input{0.0, 1.1, 2.2, 3.3};
+    cout << "Input vector:" << endl;
+    print_vector(input);
+
+    Plaintext plain;
+    // scale mustn't be too close to coeff_modulus
+    double scale = pow(2.0, 30);
+    encoder.encode(input, scale, plain);
+
+    vector<double> output;
+    cout << "Decode input vector:" << endl;
+    encoder.decode(plain, output);
+    print_vector(output);
+
+    Ciphertext encrypted;
+    encryptor.encrypt(plain, encrypted);
+
+    evaluator.square_inplace(encrypted);
+    evaluator.relinearize_inplace(encrypted, relin_keys);
+
+    cout << "Scale in squared input: " << encrypted.scale() << " (" << log2(encrypted.scale()) << " bits)" << endl;
+
+    decryptor.decrypt(encrypted, plain);
+    encoder.decode(plain, output);
+    cout << "Result vector:" << endl;
+    print_vector(output);
 }
 
 int main()
 {
+    encoders();
     return 0;
 }
