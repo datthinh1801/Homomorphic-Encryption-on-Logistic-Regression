@@ -6,3 +6,5 @@ CMakeFiles/
 main.dir/
 Release/
 x64/
+CMakeCache.txt
+cmake_install.cmake
