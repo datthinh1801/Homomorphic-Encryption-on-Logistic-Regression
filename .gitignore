@@ -1,0 +1,8 @@
+*.exe
+*.vcxproj*
+*.sln
+build/
+CMakeFiles/
+main.dir/
+Release/
+x64/
