@@ -45,7 +45,8 @@ void Encode(CKKSEncoder &encoder, double input, double &scale, Plaintext &output
     encoder.encode(input, scale, output);
 }
 
-// Ciphertext output will be 3-lower level than the Ciphertext input
+// Perform sigmoid function on the x_encrypted (Level 5)
+// The Ciphertext output will be a "spread" result (Level 2)
 Ciphertext Sigmoid(SEALContext &context, RelinKeys &relin_keys, double scale, Ciphertext &x_encrypted)
 {
     Evaluator evaluator(context);
@@ -156,27 +157,76 @@ Ciphertext Sigmoid(SEALContext &context, RelinKeys &relin_keys, double scale, Ci
     return encrypted_final_result;
 }
 
-// Ciphertext output will be 1-lower level than the Ciphertext inputs
-Ciphertext MulVector(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois_keys, double scale, Ciphertext &x1, Ciphertext &x2, size_t slot_count)
+Ciphertext Sum(SEALContext &context, GaloisKeys &galois_kes, const Ciphertext &x1, const Ciphertext &x2, size_t slot_count)
+{
+    Evaluator evaluator(context);
+
+    Ciphertext copied_x1 = x1;
+    Ciphertext copied_x2 = x2;
+    for (size_t i = 1; i < slot_count; ++i)
+    {
+        evaluator.rotate_vector_inplace(copied_x2, 1, galois_kes);
+        evaluator.add_inplace(copied_x1, copied_x2);
+    }
+    return copied_x1;
+}
+
+// Perform vector multiplication between the x_encrypted (Level 6) and the weights_encrypted (Level 6)
+// The Ciphertext output will be a "spread" sum of the multiplication result (Level 5)
+Ciphertext VectorMultiplication(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois_keys, Ciphertext &x_encrypted, Ciphertext &weights_encrypted, size_t slot_count)
 {
     Evaluator evaluator(context);
 
     // x1 - Level 6
     // x2 - Level 6
     Ciphertext encrypted_product;
-    evaluator.multiply(x1, x2, encrypted_product);
+    evaluator.multiply(x_encrypted, weights_encrypted, encrypted_product);
     evaluator.relinearize_inplace(encrypted_product, relin_keys);
     evaluator.rescale_to_next_inplace(encrypted_product);
     // encrypted_product -> Level 5
 
-    Ciphertext copy_encrypted_product = encrypted_product;
-    for (size_t i = 1; i < slot_count; ++i)
-    {
-        evaluator.rotate_vector_inplace(copy_encrypted_product, 1, galois_keys);
-        evaluator.add_inplace(encrypted_product, copy_encrypted_product);
-    }
+    return Sum(context, galois_keys, encrypted_product, encrypted_product, slot_count);
+}
 
-    return encrypted_product;
+// Perform partial derivative on the sigmoided_value of one single encrypted sample
+// Ciphertext inputs:
+// sigmoided_value  -> Level 2
+// x_encrypted      -> Level 6
+// y_encrypted      -> Leevl 6
+// Ciphertext output:
+// result           -> Level 1
+Ciphertext PartialDerivative(SEALContext &context, RelinKeys &relin_keys, Ciphertext &sigmoided_value, const Ciphertext &x_encrypted, const Ciphertext &y_encrypted)
+{
+    // sigmoided_value  -> Level 2
+    // x_encrypted      -> Level 6
+    // y_encrypted      -> Level 6
+    Evaluator evaluator(context);
+
+    // modulus switch x_encrypted and y_encrypted to the same as sigmoided_value
+    parms_id_type sigmoided_value_parms_id = sigmoided_value.parms_id();
+
+    Ciphertext x = x_encrypted, y = y_encrypted;
+    evaluator.mod_switch_to_inplace(x, sigmoided_value_parms_id);
+    // x -> Level 2
+
+    evaluator.mod_switch_to_inplace(y, sigmoided_value_parms_id);
+    // y -> Level 2
+
+    Ciphertext result = sigmoided_value;
+
+    // result = -sigmoided_value
+    evaluator.negate(sigmoided_value, result);
+
+    // result = y_encrypted - sigmoided_value
+    evaluator.add_inplace(result, y);
+
+    // result = (y_encrypted - sigmoided_value) * x_encrypted
+    evaluator.multiply_inplace(result, x);
+    evaluator.relinearize_inplace(result, relin_keys);
+    evaluator.rescale_to_next_inplace(result);
+    // result -> Level 1
+
+    return result;
 }
 
 // Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, double scale, vector<Ciphertext> &sample, Ciphertext &weight)
