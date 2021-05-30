@@ -266,8 +266,9 @@ Ciphertext SumPartialDerivative(SEALContext &context, RelinKeys &relin_keys, con
     return encrypted_sum;
 }
 
+// This algorithm is only able to train 1 iteration at a time due to incompatible levels of operands at the end of the algorithm
 Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois_keys, double scale, vector<Ciphertext> &samples, vector<Ciphertext> &labels,
-                 Ciphertext &weight, Ciphertext &learning_rate, unsigned int max_iterations, size_t slot_count)
+                 Ciphertext &weight, Ciphertext &learning_rate, size_t slot_count)
 {
     Evaluator evaluator(context);
 
@@ -282,42 +283,45 @@ Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois
     // learning_rate_mul_inv_m -> Level 5
 
     // Privacy preserving logistic regression algorithm
-    for (unsigned int iteration = 1; iteration <= max_iterations; ++iteration)
+    vector<Ciphertext> weighted_samples;
+    // Compute sigmoid values of all samples
+    for (int i = 0; i < samples.size(); ++i)
     {
-        vector<Ciphertext> weighted_samples;
-        // Compute sigmoid values of all samples
-        for (int i = 0; i < samples.size(); ++i)
-        {
-            // Multiply the sample and the weight
-            Ciphertext result = VectorMultiplication(context, relin_keys, galois_keys, samples[i], weight, slot_count);
-            // result - Level 5
+        // Multiply the sample and the weight
+        Ciphertext result = VectorMultiplication(context, relin_keys, galois_keys, samples[i], weight, slot_count);
+        // result - Level 5
 
-            // Compute the partial derivative of the weighted sample
-            result = PartialDerivative(context, relin_keys, result, samples[i], labels[i], scale);
-            // result - Level 1
+        // Compute the partial derivative of the weighted sample
+        result = PartialDerivative(context, relin_keys, result, samples[i], labels[i], scale);
+        // result - Level 1
 
-            weighted_samples.push_back(result);
-        }
-
-        // Compute the sum of the partial derivatives
-        Ciphertext encrypted_derivatives_sum = SumPartialDerivative(context, relin_keys, weighted_samples);
-
-        // Modulus switch all operands to the same level
-        parms_id_type encrypted_derivatives_sum_parms_id = encrypted_derivatives_sum.parms_id();
-        evaluator.mod_switch_to_inplace(learning_rate_mul_inv_m, encrypted_derivatives_sum_parms_id);
-
-        // Multiply learning_rate / m * sum_derivatives
-        Ciphertext encrypted_weight_adjustment;
-        evaluator.multiply(encrypted_derivatives_sum, learning_rate_mul_inv_m, encrypted_weight_adjustment);
-        evaluator.relinearize_inplace(encrypted_weight_adjustment, relin_keys);
-        evaluator.rescale_to_next_inplace(encrypted_weight_adjustment);
-        // encrypted_weight_adjustment - Level 0
-
-        parms_id_type encrypted_weight_adjustment_parms_id = encrypted_weight_adjustment.parms_id();
-        evaluator.mod_switch_to_inplace(weight, encrypted_weight_adjustment_parms_id);
-        evaluator.sub_inplace(weight, encrypted_weight_adjustment);
-        break;
+        weighted_samples.push_back(result);
     }
+
+    // Compute the sum of the partial derivatives
+    Ciphertext encrypted_derivatives_sum = SumPartialDerivative(context, relin_keys, weighted_samples);
+
+    // Modulus switch all operands to the same level
+    parms_id_type encrypted_derivatives_sum_parms_id = encrypted_derivatives_sum.parms_id();
+    evaluator.mod_switch_to_inplace(learning_rate_mul_inv_m, encrypted_derivatives_sum_parms_id);
+
+    // Multiply learning_rate / m * sum_derivatives
+    Ciphertext encrypted_weight_adjustment;
+    evaluator.multiply(encrypted_derivatives_sum, learning_rate_mul_inv_m, encrypted_weight_adjustment);
+    evaluator.relinearize_inplace(encrypted_weight_adjustment, relin_keys);
+    evaluator.rescale_to_next_inplace(encrypted_weight_adjustment);
+    // encrypted_weight_adjustment - Level 0
+
+    // Recale operands before performning subtraction
+    encrypted_weight_adjustment.scale() = scale;
+    weight.scale() = scale;
+
+    // Modulus switch chain
+    parms_id_type encrypted_weight_adjustment_parms_id = encrypted_weight_adjustment.parms_id();
+    evaluator.mod_switch_to_inplace(weight, encrypted_weight_adjustment_parms_id);
+
+    // Update weight
+    evaluator.add_inplace(weight, encrypted_weight_adjustment);
 
     return weight;
 }
