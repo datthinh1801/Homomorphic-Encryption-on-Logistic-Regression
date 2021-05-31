@@ -61,3 +61,16 @@ void WriteCSV(string filename, const vector<double> &data)
     }
     fout.close();
 }
+
+vector<double> ExtractLabel(vector<vector<double>> &dataset, int col_idx)
+{
+    vector<double> labels;
+    for (int i = 0; i < dataset.size(); ++i)
+    {
+        labels.push_back(dataset[i][col_idx]);
+        dataset[i].erase(dataset[i].begin() + col_idx);
+    }
+
+    return labels;
+}
+
