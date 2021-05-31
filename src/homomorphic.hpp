@@ -272,7 +272,7 @@ Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois
 {
     Evaluator evaluator(context);
 
-    // Compute learning_rate / m
+    // Compute (learning_rate / m)
     Plaintext plain_m;
     Encode(context, 1.0 / samples.size(), scale, plain_m);
 
@@ -300,6 +300,7 @@ Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois
 
     // Compute the sum of the partial derivatives
     Ciphertext encrypted_derivatives_sum = SumPartialDerivative(context, relin_keys, weighted_samples);
+    // encrypted_derivatives_sum - Level 1
 
     // Modulus switch all operands to the same level
     parms_id_type encrypted_derivatives_sum_parms_id = encrypted_derivatives_sum.parms_id();
@@ -319,9 +320,14 @@ Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois
     // Modulus switch chain
     parms_id_type encrypted_weight_adjustment_parms_id = encrypted_weight_adjustment.parms_id();
     evaluator.mod_switch_to_inplace(weight, encrypted_weight_adjustment_parms_id);
+    // weight - Level 0
 
     // Update weight
     evaluator.add_inplace(weight, encrypted_weight_adjustment);
 
     return weight;
+}
+
+void ReportTrainAccuracy(const vector<vector<double>> &features, const vector<double> &labels)
+{
 }
