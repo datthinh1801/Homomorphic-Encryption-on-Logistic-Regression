@@ -1,17 +1,38 @@
-#include "seal/seal.h"
-#include "homomorphic.hpp"
 #include <iostream>
 #include <vector>
+
+#include "seal/seal.h"
+#include "homomorphic.hpp"
+#include "data_preprocessing.hpp"
 using namespace std;
 using namespace seal;
 
 int main()
 {
+    /*
+    [DATA PREPROCESSING]
+    */
+    // Read data from csv file
+    auto dataset = ReadCSV(".\\dataset\\train_data.csv");
+    if (dataset.back().size() == 0)
+    {
+        dataset.pop_back();
+    }
+
+    auto labels = ExtractLabel(dataset, 1);
+    auto features = dataset;
+    vector<double> weights(features[0].size(), 0);
+    double learning_rate = 0.1;
+    int max_iterations = 10;
+
+    /*
+    [HOMOMORPHIC INITIALIZATION]
+    */
     // Initialize a SEALContext object
     SEALContext context = SetupCKKS(16384);
     print_parameters(context);
     // Validate parameters
-    cout << "Valid: " << context.parameter_error_message() << endl;
+    cout << "Are the parameters valid? " << context.parameter_error_message() << endl;
     double scale = pow(2.0, 40);
     CKKSEncoder encoder(context);
     size_t slot_count = encoder.slot_count();
@@ -26,53 +47,63 @@ int main()
     GaloisKeys galois_keys;
     keygen.create_galois_keys(galois_keys);
 
-    // sample 1
-    Plaintext plain_input;
-    vector<double> input1{0.0, 1.0, 2.0, 3.0, 4.0, 5.0};
-    Encode(encoder, input1, scale, plain_input);
-    Ciphertext encrypted_input = Encrypt(context, public_key, scale, plain_input);
+    /*
+    [DATA PREPARATION FOR HOMOMORPHIC TRAINING]
+    */
+    // Encrypt features
+    vector<Ciphertext> encrypted_features;
+    for (int i = 0; i < features.size(); ++i)
+    {
+        Plaintext plain_record;
+        Encode(encoder, features[i], scale, plain_record);
+        Ciphertext encrypted_record = Encrypt(context, public_key, scale, plain_record);
+        encrypted_features.push_back(encrypted_record);
+    }
 
-    vector<Ciphertext> encrypted_samples;
-    encrypted_samples.push_back(encrypted_input);
-
-    // sample 2
-    vector<double> input2{0.0, 1.0, 0.0, 3.0, 1.0, 3.0};
-    Encode(encoder, input2, scale, plain_input);
-    encrypted_input = Encrypt(context, public_key, scale, plain_input);
-    encrypted_samples.push_back(encrypted_input);
-
-    // labels
-    double label = 1.0;
-    Plaintext plain_label;
-    Encode(encoder, label, scale, plain_label);
-    Ciphertext encrypted_label = Encrypt(context, public_key, scale, plain_label);
-
+    // Encrypt labels
     vector<Ciphertext> encrypted_labels;
-    encrypted_labels.push_back(encrypted_label);
+    for (int i = 0; i < labels.size(); ++i)
+    {
+        Plaintext plain_label;
+        Encode(encoder, labels[i], scale, plain_label);
+        Ciphertext encrypted_label = Encrypt(context, public_key, scale, plain_label);
+        encrypted_labels.push_back(encrypted_label);
+    }
 
-    label = 0.0;
-    Encode(encoder, label, scale, plain_label);
-    encrypted_label = Encrypt(context, public_key, scale, plain_label);
-    encrypted_labels.push_back(encrypted_label);
-
-    // weight
-    Plaintext plain_weight;
-    vector<double> weights(5, 0);
-    Encode(encoder, weights, scale, plain_weight);
-    Ciphertext encrypted_weights = Encrypt(context, public_key, scale, plain_weight);
-
-    // learning rate
-    double learning_rate = 0.5;
+    // Encrypt learning rate
     Plaintext plain_learning_rate;
     Encode(encoder, learning_rate, scale, plain_learning_rate);
     Ciphertext encrypted_learning_rate = Encrypt(context, public_key, scale, plain_learning_rate);
 
-    // train
-    Ciphertext encrypted_trained_weights = Train(context, relin_keys, galois_keys, scale, encrypted_samples, encrypted_labels, encrypted_weights, encrypted_learning_rate, slot_count);
-    Plaintext plain_trained_weights = Decrypt(context, secret_key, encrypted_trained_weights);
-    vector<double> trained_weights;
-    Decode(context, plain_trained_weights, trained_weights);
-    print_vector(trained_weights, 5, 7);
+    /*
+    [HOMOMORPHICALLY TRAIN A LOGISTIC REGRESS MODEL]
+    */
+    int total_start = clock();
+    for (int iteration = 1; iteration <= max_iterations; ++iteration)
+    {
+        int iteration_start = clock();
+
+        cout << "Iteration #" << iteration << "...\t";
+        // Encrypt weights
+        Plaintext plain_weight;
+        Encode(encoder, weights, scale, plain_weight);
+        Ciphertext encrypted_weights = Encrypt(context, public_key, scale, plain_weight);
+
+        // Homomorphically train
+        Ciphertext encrypted_trained_weights = Train(context, relin_keys, galois_keys, scale, encrypted_features, encrypted_labels, encrypted_weights,
+                                                     encrypted_learning_rate, slot_count);
+        Plaintext plain_trained_weights = Decrypt(context, secret_key, encrypted_trained_weights);
+        Decode(context, plain_trained_weights, weights);
+
+        int iteration_end = clock();
+        cout << (iteration_end - iteration_start) / CLOCKS_PER_SEC << "s" << endl;
+    }
+
+    int total_end = clock();
+    cout << "Trained weights" << endl;
+    print_vector(weights);
+    cout << "Training time: " << (total_end - total_start) / CLOCKS_PER_SEC << "s" << endl;
+    WriteCSV(".\\weights\\weights.csv", weights);
 
     return 0;
 }
