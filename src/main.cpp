@@ -7,13 +7,15 @@
 using namespace std;
 using namespace seal;
 
+#define MAX_ITER 10
+
 int main()
 {
     /*
     [DATA PREPROCESSING]
     */
     // Read data from csv file
-    auto dataset = ReadCSV(".\\dataset\\train_data.csv");
+    auto dataset = ReadDatasetFromCSV(".\\dataset\\train_data.csv");
     if (dataset.back().size() == 0)
     {
         dataset.pop_back();
@@ -23,17 +25,16 @@ int main()
     auto features = dataset;
     vector<double> weights(features[0].size(), 0);
     double learning_rate = 0.1;
-    int max_iterations = 10;
 
     /*
     [HOMOMORPHIC INITIALIZATION]
     */
     // Initialize a SEALContext object
-    SEALContext context = SetupCKKS(16384);
+    SEALContext context = SetupCKKS();
     print_parameters(context);
     // Validate parameters
     cout << "Are the parameters valid? " << context.parameter_error_message() << endl;
-    double scale = pow(2.0, 40);
+    double scale = pow(2.0, 20);
     CKKSEncoder encoder(context);
     size_t slot_count = encoder.slot_count();
 
@@ -78,8 +79,9 @@ int main()
     /*
     [HOMOMORPHICALLY TRAIN A LOGISTIC REGRESS MODEL]
     */
+    int iteration = ReadCheckpointFromFile(".\\weights\\iteration.txt");
     int total_start = clock();
-    for (int iteration = 1; iteration <= max_iterations; ++iteration)
+    for (iteration; iteration <= MAX_ITER; ++iteration)
     {
         int iteration_start = clock();
 
@@ -97,13 +99,14 @@ int main()
 
         int iteration_end = clock();
         cout << (iteration_end - iteration_start) / CLOCKS_PER_SEC << "s" << endl;
+        WriteCheckpointToFile(".\\weights\\iteration.txt", iteration);
+        WriteWeightsToCSV(".\\weights\\weights.csv", weights);
     }
 
     int total_end = clock();
-    cout << "Trained weights" << endl;
+    cout << "Trained weights:" << endl;
     print_vector(weights);
     cout << "Training time: " << (total_end - total_start) / CLOCKS_PER_SEC << "s" << endl;
-    WriteCSV(".\\weights\\weights.csv", weights);
 
     return 0;
 }
