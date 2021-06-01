@@ -5,12 +5,20 @@
 using namespace std;
 using namespace seal;
 
-SEALContext SetupCKKS(size_t poly_modulus_degree)
+SEALContext SetupCKKS()
 {
     EncryptionParameters parms(scheme_type::ckks);
+    size_t poly_modulus_degree = 16384;
     parms.set_poly_modulus_degree(poly_modulus_degree);
-    // 5 primes to support 4 level of multiplicative depth
-    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {60, 40, 40, 40, 40, 40, 40, 60}));
+    try
+    {
+        parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {60, 40, 40, 40, 40, 40, 40, 60}));
+    }
+    catch (exception e)
+    {
+        cout << e.what() << endl;
+        exit(1);
+    }
     return SEALContext(parms);
 }
 
@@ -267,6 +275,7 @@ Ciphertext SumPartialDerivative(SEALContext &context, RelinKeys &relin_keys, con
 }
 
 // This algorithm is only able to train 1 iteration at a time due to incompatible levels of operands at the end of the algorithm
+// This function return the new adjusted encrypted weights parameter
 Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois_keys, double scale, vector<Ciphertext> &samples, vector<Ciphertext> &labels,
                  Ciphertext &weight, Ciphertext &learning_rate, size_t slot_count)
 {
@@ -289,10 +298,17 @@ Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois
     {
         // Multiply the sample and the weight
         Ciphertext result = VectorMultiplication(context, relin_keys, galois_keys, samples[i], weight, slot_count);
+        // result = samples[i] * weight
         // result - Level 5
+
+        // Perform sigmoid function
+        result = Sigmoid(context, relin_keys, scale, result);
+        // result = sigmoid(samples[i] * weight)
+        // result - Level 2
 
         // Compute the partial derivative of the weighted sample
         result = PartialDerivative(context, relin_keys, result, samples[i], labels[i], scale);
+        // result = (y - sigmoid) * x
         // result - Level 1
 
         weighted_samples.push_back(result);
@@ -326,8 +342,4 @@ Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois
     evaluator.add_inplace(weight, encrypted_weight_adjustment);
 
     return weight;
-}
-
-void ReportTrainAccuracy(const vector<vector<double>> &features, const vector<double> &labels)
-{
 }
