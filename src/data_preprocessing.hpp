@@ -5,7 +5,7 @@
 #include <sstream>
 using namespace std;
 
-vector<vector<double>> ReadCSV(string filename)
+vector<vector<double>> ReadDatasetFromCSV(string filename)
 {
     fstream fin;
     fin.open(filename, ios::in);
@@ -46,7 +46,7 @@ vector<vector<double>> ReadCSV(string filename)
 // Write to a csv file
 // If the file exists, its contents will be overwritten
 // Otherwise, create a new file and write to it
-void WriteCSV(string filename, const vector<double> &data)
+void WriteWeightsToCSV(string filename, const vector<double> &data)
 {
     fstream fout;
     fout.open(filename, ios::out);
@@ -62,6 +62,25 @@ void WriteCSV(string filename, const vector<double> &data)
     fout.close();
 }
 
+int ReadCheckpointFromFile(string filename)
+{
+    fstream fin;
+    fin.open(filename, ios::in);
+
+    int saved_iteration;
+    fin >> saved_iteration;
+    fin.close();
+    return saved_iteration;
+}
+
+void WriteCheckpointToFile(string filename, int iteration)
+{
+    fstream fout;
+    fout.open(filename, ios::out);
+    fout << iteration;
+    fout.close();
+}
+
 vector<double> ExtractLabel(vector<vector<double>> &dataset, int col_idx)
 {
     vector<double> labels;
@@ -73,4 +92,3 @@ vector<double> ExtractLabel(vector<vector<double>> &dataset, int col_idx)
 
     return labels;
 }
-
