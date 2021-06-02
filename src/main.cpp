@@ -4,6 +4,7 @@
 #include "seal/seal.h"
 #include "homomorphic.hpp"
 #include "data_preprocessing.hpp"
+#include "plain_algorithms.hpp"
 using namespace std;
 using namespace seal;
 
@@ -23,8 +24,13 @@ int main()
 
     auto labels = ExtractLabel(dataset, 1);
     auto features = dataset;
-    vector<double> weights(features[0].size(), 0);
     double learning_rate = 0.1;
+    int iteration = ReadCheckpointFromFile(".\\weights\\iteration.txt");
+    vector<double> weights(features[0].size(), 0);
+    if (iteration > 1)
+    {
+        weights = ReadWeightsFromCSV(".\\weights\\weights.csv");
+    }
 
     /*
     [HOMOMORPHIC INITIALIZATION]
@@ -79,7 +85,6 @@ int main()
     /*
     [HOMOMORPHICALLY TRAIN A LOGISTIC REGRESS MODEL]
     */
-    int iteration = ReadCheckpointFromFile(".\\weights\\iteration.txt");
     int total_start = clock();
     for (iteration; iteration <= MAX_ITER; ++iteration)
     {
@@ -98,7 +103,9 @@ int main()
         Decode(context, plain_trained_weights, weights);
 
         int iteration_end = clock();
-        cout << (iteration_end - iteration_start) / CLOCKS_PER_SEC << "s" << endl;
+        cout << "Execution time: " << (iteration_end - iteration_start) / CLOCKS_PER_SEC << "s\t";
+        cout << "Train accuracy: " << ReportAccuracy(features, labels, weights) << endl;
+
         WriteCheckpointToFile(".\\weights\\iteration.txt", iteration);
         WriteWeightsToCSV(".\\weights\\weights.csv", weights);
     }
