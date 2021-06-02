@@ -78,99 +78,142 @@ Ciphertext Sigmoid(SEALContext &context, RelinKeys &relin_keys, double scale, Ci
     Evaluator evaluator(context);
     CKKSEncoder encoder(context);
 
+    ///////////////////////////////////////////////////////////////
     /*
                     [ COMPUTE 0.002x^5]
     */
 
-    // x_encrypted -> Level 3
+    // ------------------------------------------------------- //
+    // x_encrypted -> Level 5
+    // compute x_encrypted ^ 2
     Ciphertext x_sq_encrypted;
     evaluator.square(x_encrypted, x_sq_encrypted);
     evaluator.relinearize_inplace(x_sq_encrypted, relin_keys);
     evaluator.rescale_to_next_inplace(x_sq_encrypted);
-    // x_sq_encrypted -> Level 2
+    x_sq_encrypted.scale() = scale;
+    // x_sq_encrypted -> Level 4
 
+    // ------------------------------------------------------- //
+    // x_sq_encrypted -> Level 4
+    // compute x_encrypted ^ 4
     Ciphertext x_quad_encrypted;
     evaluator.square(x_sq_encrypted, x_quad_encrypted);
     evaluator.relinearize_inplace(x_quad_encrypted, relin_keys);
     evaluator.rescale_to_next_inplace(x_quad_encrypted);
-    // x_quad_encrypted -> Level 1
+    x_quad_encrypted.scale() = scale;
+    // x_quad_encrypted -> Level 3
 
+    // ------------------------------------------------------- //
+    // x_encrypted -> Level 5
+    // compute 0.002 * x_encrypted
     Ciphertext x_encrypted_coeff5;
     Plaintext plain_coeff5;
     Encode(encoder, 0.002, scale, plain_coeff5);
-    // plain_coef5 -> Level 3
+
+    // plain_coeff_5 - Level 6
+    // x_encrypted - Level 5
+    // => mod switch plain_coeff_5 to level 5
+    parms_id_type x_encrypted_parms_id = x_encrypted.parms_id();
+    evaluator.mod_switch_to_inplace(plain_coeff5, x_encrypted_parms_id);
+
     evaluator.multiply_plain(x_encrypted, plain_coeff5, x_encrypted_coeff5);
     // unnecessary to relinearize the result of 1 ciphertext and 1 plaintext
     // only necessary or both ciphertexts
     evaluator.rescale_to_next_inplace(x_encrypted_coeff5);
-    // x_encrypted_coeff5 -> Level 2
+    x_encrypted_coeff5.scale() = scale;
+    // x_encrypted_coeff5 -> Level 4
 
+    // ------------------------------------------------------- //
+    // x_encrypted_coeff5 -> Level 4
+    // compute 0.002 * (x_encrypted ^ 5)
+
+    // x_encrypted_coeff5 -> Level 4
+    // x_quad_encrypted -> Level 3
+    // => mod switch x_encrypted_coeff5 to level 3
     parms_id_type x_quad_encrypted_parms_id = x_quad_encrypted.parms_id();
     evaluator.mod_switch_to_inplace(x_encrypted_coeff5, x_quad_encrypted_parms_id);
-    // x_encrypted_coef5 -> Level 1
 
     Ciphertext x_pow_5_encrypted_coeff5;
     evaluator.multiply(x_quad_encrypted, x_encrypted_coeff5, x_pow_5_encrypted_coeff5);
     evaluator.relinearize_inplace(x_pow_5_encrypted_coeff5, relin_keys);
     evaluator.rescale_to_next_inplace(x_pow_5_encrypted_coeff5);
-    // x_pow_5_encrypted_coeff5 -> Level 0
+    x_pow_5_encrypted_coeff5.scale() = scale;
+    // x_pow_5_encrypted_coeff5 -> Level 2
 
+    // save parms_id for later mod switch
     parms_id_type last_parms_id = x_pow_5_encrypted_coeff5.parms_id();
+    // Level 2
 
+    ///////////////////////////////////////////////////////////////
     /*
                         [COMPUTE 0.021x^3]
     */
 
+    // ------------------------------------------------------- //
+    // x_encrypted -> Level 5
+    // compute 0.021 * x_encrypted
     Ciphertext x_encrypted_coeff3;
     Plaintext plain_coeff3;
     Encode(encoder, 0.021, scale, plain_coeff3);
-    // plain_coeff3 -> Level 3
 
+    // plain_coeff3 -> Level 6
+    // x_encrypted -> Level 5
+    // => mod switch plain_coeff3 to level 5
+    evaluator.mod_switch_to_inplace(plain_coeff3, x_encrypted_parms_id);
     evaluator.multiply_plain(x_encrypted, plain_coeff3, x_encrypted_coeff3);
     evaluator.rescale_to_next_inplace(x_encrypted_coeff3);
-    // x_encrypted_coeff3 -> Level 2
+    x_encrypted_coeff3.scale() = scale;
+    // x_encrypted_coeff3 -> Level 4
 
+    // ------------------------------------------------------- //
+    // x_encrypted_coeff3 -> Level 4
+    // x_sq_encrypted -> Level 4
+    // compute 0.021 * (x_encrypted ^ 3)
     Ciphertext x_pow_3_encrypted_coeff3;
     evaluator.multiply(x_sq_encrypted, x_encrypted_coeff3, x_pow_3_encrypted_coeff3);
     evaluator.relinearize_inplace(x_pow_3_encrypted_coeff3, relin_keys);
     evaluator.rescale_to_next_inplace(x_pow_3_encrypted_coeff3);
-    // x_pow_3_encrypted_coeff3 -> Level 1
+    x_pow_3_encrypted_coeff3.scale() = scale;
+    // x_pow_3_encrypted_coeff3 -> Level 3
 
     evaluator.mod_switch_to_inplace(x_pow_3_encrypted_coeff3, last_parms_id);
-    // x_pow_3_encrypted_coeff3 -> Level 0
+    // x_pow_3_encrypted_coeff3 -> Level 2
 
+    ///////////////////////////////////////////////////////////////
     /*
                         [COMPUTE 0.25x]
     */
 
+    // ------------------------------------------------------- //
+    // x_encrypted -> Level 5
+    // compute 0.25 * x_encrypted
     Ciphertext x_encrypted_coeff1;
     Plaintext plain_coeff1;
     Encode(encoder, 0.25, scale, plain_coeff1);
-    // plain_coeff1 -> Level 3
 
+    // plain_coeff1 -> Level 6
+    // x_encrypted -> Level 5
+    // => mod switch plain_coeff1 to Level 5
+    evaluator.mod_switch_to_inplace(plain_coeff1, x_encrypted_parms_id);
     evaluator.multiply_plain(x_encrypted, plain_coeff1, x_encrypted_coeff1);
     evaluator.rescale_to_next_inplace(x_encrypted_coeff1);
-    // x_encrypted_coeff1 -> Level 2
+    x_encrypted_coeff1.scale() = scale;
+    // x_encrypted_coeff1 -> Level 4
 
     evaluator.mod_switch_to_inplace(x_encrypted_coeff1, last_parms_id);
-    // x_encrypted_coeff1 -> Level 0
+    // x_encrypted_coeff1 -> Level 2
 
+    ///////////////////////////////////////////////////////////////
     /*
                         [COMPUTE FINAL RESULT]
     */
 
     Plaintext plain_coeff0;
     Encode(encoder, 0.5, scale, plain_coeff0);
-    // plain_coeff0 -> Level 3
+    // plain_coeff0 -> Level 6
 
     evaluator.mod_switch_to_inplace(plain_coeff0, last_parms_id);
-    // plain_coeff0 -> Level 0
-
-    // Set scales of all coefficients to the same scale
-    x_pow_5_encrypted_coeff5.scale() = scale;
-    x_pow_3_encrypted_coeff3.scale() = scale;
-    x_encrypted_coeff1.scale() = scale;
-    plain_coeff0.scale() = scale;
+    // plain_coeff0 -> Level 2
 
     Ciphertext encrypted_final_result;
     // result = 0.5 + 0.25x
@@ -200,7 +243,7 @@ Ciphertext Sum(SEALContext &context, GaloisKeys &galois_keys, const Ciphertext &
 
 // Perform vector multiplication between the x_encrypted (Level 6) and the weights_encrypted (Level 6)
 // The Ciphertext output will be a "spread" sum of the multiplication result (Level 5)
-Ciphertext VectorMultiplication(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois_keys, Ciphertext &x_encrypted, Ciphertext &weights_encrypted, size_t slot_count)
+Ciphertext VectorMultiplication(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois_keys, const Ciphertext &x_encrypted, const Ciphertext &weights_encrypted, size_t slot_count)
 {
     Evaluator evaluator(context);
 
@@ -276,11 +319,12 @@ Ciphertext SumPartialDerivative(SEALContext &context, RelinKeys &relin_keys, con
 
 // This algorithm is only able to train 1 iteration at a time due to incompatible levels of operands at the end of the algorithm
 // This function return the new adjusted encrypted weights parameter
-Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois_keys, double scale, vector<Ciphertext> &samples, vector<Ciphertext> &labels,
-                 Ciphertext &weight, Ciphertext &learning_rate, size_t slot_count)
+Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois_keys, double scale, const vector<Ciphertext> &samples, const vector<Ciphertext> &labels,
+                 const Ciphertext &weight, const Ciphertext &learning_rate, size_t slot_count)
 {
     Evaluator evaluator(context);
 
+    // --------------------------------------------------------------------- //
     // Compute (learning_rate / m)
     Plaintext plain_m;
     Encode(context, 1.0 / samples.size(), scale, plain_m);
@@ -289,57 +333,72 @@ Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois
     evaluator.multiply_plain(learning_rate, plain_m, learning_rate_mul_inv_m);
     evaluator.relinearize_inplace(learning_rate_mul_inv_m, relin_keys);
     evaluator.rescale_to_next_inplace(learning_rate_mul_inv_m);
+    learning_rate_mul_inv_m.scale() = scale;
     // learning_rate_mul_inv_m -> Level 5
 
+    // --------------------------------------------------------------------- //
     // Privacy preserving logistic regression algorithm
     vector<Ciphertext> weighted_samples;
     // Compute sigmoid values of all samples
-    for (int i = 0; i < samples.size(); ++i)
+    for (size_t i = 0; i < samples.size(); ++i)
     {
+        // ----------------------------------------------------------------- //
         // Multiply the sample and the weight
         Ciphertext result = VectorMultiplication(context, relin_keys, galois_keys, samples[i], weight, slot_count);
+        result.scale() = scale;
         // result = samples[i] * weight
-        // result - Level 5
+        // result -> Level 5
 
+        // ----------------------------------------------------------------- //
         // Perform sigmoid function
         result = Sigmoid(context, relin_keys, scale, result);
+        result.scale() = scale;
         // result = sigmoid(samples[i] * weight)
-        // result - Level 2
+        // result -> Level 2
 
+        // ----------------------------------------------------------------- //
         // Compute the partial derivative of the weighted sample
         result = PartialDerivative(context, relin_keys, result, samples[i], labels[i], scale);
+        result.scale() = scale;
         // result = (y - sigmoid) * x
-        // result - Level 1
+        // result -> Level 1
 
         weighted_samples.push_back(result);
     }
 
+    // --------------------------------------------------------------------- //
     // Compute the sum of the partial derivatives
     Ciphertext encrypted_derivatives_sum = SumPartialDerivative(context, relin_keys, weighted_samples);
-    // encrypted_derivatives_sum - Level 1
+    encrypted_derivatives_sum.scale() = scale;
+    // encrypted_derivatives_sum -> Level 1
 
+    // --------------------------------------------------------------------- //
     // Modulus switch all operands to the same level
     parms_id_type encrypted_derivatives_sum_parms_id = encrypted_derivatives_sum.parms_id();
     evaluator.mod_switch_to_inplace(learning_rate_mul_inv_m, encrypted_derivatives_sum_parms_id);
+    // learning_rate_mul_inv_m -> Level 1
 
-    // Multiply learning_rate / m * sum_derivatives
+    // --------------------------------------------------------------------- //
+    // compute learning_rate / m * sum_derivatives
+    // result is called weight_adjustment
     Ciphertext encrypted_weight_adjustment;
     evaluator.multiply(encrypted_derivatives_sum, learning_rate_mul_inv_m, encrypted_weight_adjustment);
     evaluator.relinearize_inplace(encrypted_weight_adjustment, relin_keys);
     evaluator.rescale_to_next_inplace(encrypted_weight_adjustment);
-    // encrypted_weight_adjustment - Level 0
-
-    // Recale operands before performning subtraction
     encrypted_weight_adjustment.scale() = scale;
-    weight.scale() = scale;
+    // encrypted_weight_adjustment -> Level 0
 
-    // Modulus switch chain
+    // --------------------------------------------------------------------- //
+    // encrypted_weight_adjustment -> Level 0
+    // weight -> Level 6
+    Ciphertext trained_weight = weight;
+    // trained_weight -> Level 6
     parms_id_type encrypted_weight_adjustment_parms_id = encrypted_weight_adjustment.parms_id();
-    evaluator.mod_switch_to_inplace(weight, encrypted_weight_adjustment_parms_id);
-    // weight - Level 0
+    evaluator.mod_switch_to_inplace(trained_weight, encrypted_weight_adjustment_parms_id);
+    // trained_weight -> Level 0
 
     // Update weight
-    evaluator.add_inplace(weight, encrypted_weight_adjustment);
+    evaluator.add_inplace(trained_weight, encrypted_weight_adjustment);
 
-    return weight;
+    return trained_weight;
 }
