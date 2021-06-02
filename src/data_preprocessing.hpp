@@ -62,6 +62,29 @@ void WriteWeightsToCSV(string filename, const vector<double> &data)
     fout.close();
 }
 
+vector<double> ReadWeightsFromCSV(string filename)
+{
+    fstream fin;
+    fin.open(filename, ios::in);
+
+    vector<double> weights;
+    string line, word;
+    double value;
+
+    while (fin.good())
+    {
+        getline(fin, line);
+        stringstream ssline(line);
+        while (getline(ssline, word, ','))
+        {
+            stringstream ssword(word);
+            ssword >> value;
+            weights.push_back(value);
+        }
+    }
+    return weights;
+}
+
 int ReadCheckpointFromFile(string filename)
 {
     fstream fin;
