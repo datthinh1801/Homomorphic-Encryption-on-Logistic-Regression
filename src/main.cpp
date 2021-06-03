@@ -16,7 +16,8 @@ int main()
     [DATA PREPROCESSING]
     */
     // Read data from csv file
-    auto dataset = ReadDatasetFromCSV(".\\dataset\\train_data.csv");
+    // auto dataset = ReadDatasetFromCSV(".\\dataset\\train_data.csv");
+    auto dataset = ReadDatasetFromCSV(".\\dataset\\one_line.csv");
     if (dataset.back().size() == 0)
     {
         dataset.pop_back();
@@ -57,16 +58,6 @@ int main()
     /*
     [DATA PREPARATION FOR HOMOMORPHIC TRAINING]
     */
-    // Encrypt features
-    vector<Ciphertext> encrypted_features;
-    for (int i = 0; i < features.size(); ++i)
-    {
-        Plaintext plain_record;
-        Encode(encoder, features[i], scale, plain_record);
-        Ciphertext encrypted_record = Encrypt(context, public_key, scale, plain_record);
-        encrypted_features.push_back(encrypted_record);
-    }
-
     // Encrypt labels
     vector<Ciphertext> encrypted_labels;
     for (int i = 0; i < labels.size(); ++i)
@@ -88,22 +79,38 @@ int main()
     int total_start = clock();
     for (iteration; iteration <= MAX_ITER; ++iteration)
     {
-        int iteration_start = clock();
+        // Encrypt product of features and weights
+        vector<Ciphertext> encrypted_features;
+        for (int i = 0; i < features.size(); ++i)
+        {
+            double product = PlainVectorMultiplication(features[i], weights);
+            Plaintext plain_product;
+            Encode(encoder, product, scale, plain_product);
+            Ciphertext encrypted_product = Encrypt(context, public_key, scale, plain_product);
+            encrypted_features.push_back(encrypted_product);
+        }
 
-        cout << "Iteration #" << iteration << "...\t";
         // Encrypt weights
-        Plaintext plain_weight;
-        Encode(encoder, weights, scale, plain_weight);
-        Ciphertext encrypted_weights = Encrypt(context, public_key, scale, plain_weight);
+        Plaintext plain_weights;
+        Encode(encoder, weights, scale, plain_weights);
+        Ciphertext encrypted_weights = Encrypt(context, public_key, scale, plain_weights);
+
+        // Start training
+        unsigned long iteration_start = clock();
+        cout << "Iteration #" << iteration << "...\t";
 
         // Homomorphically train
         Ciphertext encrypted_trained_weights = Train(context, relin_keys, galois_keys, scale, encrypted_features, encrypted_labels, encrypted_weights,
                                                      encrypted_learning_rate, slot_count);
+
+        // End training
+        unsigned long iteration_end = clock();
+
+        // Decrypt and update new weights
         Plaintext plain_trained_weights = Decrypt(context, secret_key, encrypted_trained_weights);
         Decode(context, plain_trained_weights, weights);
 
-        int iteration_end = clock();
-        cout << "Execution time: " << (iteration_end - iteration_start) / CLOCKS_PER_SEC << "s\t";
+        cout << "Training time: " << (iteration_end - iteration_start) / CLOCKS_PER_SEC << "s\t";
         cout << "Train accuracy: " << ReportAccuracy(features, labels, weights) << endl;
 
         WriteCheckpointToFile(".\\weights\\iteration.txt", iteration);

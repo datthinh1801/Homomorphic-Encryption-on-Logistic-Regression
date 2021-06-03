@@ -344,9 +344,11 @@ Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois
     {
         // ----------------------------------------------------------------- //
         // Multiply the sample and the weight
-        Ciphertext result = VectorMultiplication(context, relin_keys, galois_keys, samples[i], weight, slot_count);
-        result.scale() = scale;
+        // Ciphertext result = VectorMultiplication(context, relin_keys, galois_keys, samples[i], weight, slot_count);
+        // result.scale() = scale;
         // result = samples[i] * weight
+        Ciphertext result = samples[i];
+        evaluator.mod_switch_to_next_inplace(result);
         // result -> Level 5
 
         // ----------------------------------------------------------------- //
