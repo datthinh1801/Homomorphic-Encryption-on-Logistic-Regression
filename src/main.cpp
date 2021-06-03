@@ -8,7 +8,7 @@
 using namespace std;
 using namespace seal;
 
-#define MAX_ITER 10
+#define MAX_ITER 100
 
 int main()
 {
@@ -16,8 +16,7 @@ int main()
     [DATA PREPROCESSING]
     */
     // Read data from csv file
-    // auto dataset = ReadDatasetFromCSV(".\\dataset\\train_data.csv");
-    auto dataset = ReadDatasetFromCSV(".\\dataset\\one_line.csv");
+    auto dataset = ReadDatasetFromCSV(".\\dataset\\train_data.csv");
     if (dataset.back().size() == 0)
     {
         dataset.pop_back();
@@ -25,7 +24,7 @@ int main()
 
     auto labels = ExtractLabel(dataset, 1);
     auto features = dataset;
-    double learning_rate = 0.1;
+    double learning_rate = 0.001;
     int iteration = ReadCheckpointFromFile(".\\weights\\iteration.txt");
     vector<double> weights(features[0].size(), 0);
     if (iteration > 1)
@@ -41,6 +40,8 @@ int main()
     print_parameters(context);
     // Validate parameters
     cout << "Are the parameters valid? " << context.parameter_error_message() << endl;
+    cout << endl;
+
     double scale = pow(2.0, 20);
     CKKSEncoder encoder(context);
     size_t slot_count = encoder.slot_count();
@@ -79,6 +80,7 @@ int main()
     int total_start = clock();
     for (iteration; iteration <= MAX_ITER; ++iteration)
     {
+        cout << "Iteration #" << iteration << "...\t\t";
         // Encrypt product of features and weights
         vector<Ciphertext> encrypted_features;
         for (int i = 0; i < features.size(); ++i)
@@ -97,7 +99,6 @@ int main()
 
         // Start training
         unsigned long iteration_start = clock();
-        cout << "Iteration #" << iteration << "...\t";
 
         // Homomorphically train
         Ciphertext encrypted_trained_weights = Train(context, relin_keys, galois_keys, scale, encrypted_features, encrypted_labels, encrypted_weights,
@@ -106,12 +107,13 @@ int main()
         // End training
         unsigned long iteration_end = clock();
 
-        // Decrypt and update new weights
+        // Decrypt and update new weights in place
         Plaintext plain_trained_weights = Decrypt(context, secret_key, encrypted_trained_weights);
         Decode(context, plain_trained_weights, weights);
+        weights.resize(features[0].size());
 
-        cout << "Training time: " << (iteration_end - iteration_start) / CLOCKS_PER_SEC << "s\t";
-        cout << "Train accuracy: " << ReportAccuracy(features, labels, weights) << endl;
+        cout << "Training time: " << (iteration_end - iteration_start) / CLOCKS_PER_SEC << "s\t\t";
+        cout << "Train accuracy: " << ComputeAccuracy(features, labels, weights) << endl;
 
         WriteCheckpointToFile(".\\weights\\iteration.txt", iteration);
         WriteWeightsToCSV(".\\weights\\weights.csv", weights);
