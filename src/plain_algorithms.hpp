@@ -22,19 +22,18 @@ double PlainSigmoid(const vector<double> &sample, const vector<double> &weights)
 
 double ComputeAccuracy(const vector<vector<double>> &features, const vector<double> &labels, const vector<double> &weights)
 {
-    vector<double> result;
+    vector<double> result(features.size());
     size_t correct = 0;
 
     for (size_t i = 0; i < features.size(); ++i)
     {
-        double prediction = PlainSigmoid(features[i], weights);
-        result.push_back(round(prediction));
+        result[i] = PlainSigmoid(features[i], weights);
 
-        if (result.back() == labels[i])
+        if (result[i] == labels[i])
         {
             ++correct;
         }
     }
 
-    return (1.0 * correct) / result.size();
+    return double(correct) / result.size();
 }

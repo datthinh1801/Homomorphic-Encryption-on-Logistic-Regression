@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <random>
 
 #include "seal/seal.h"
 #include "homomorphic.hpp"
@@ -8,25 +9,25 @@
 using namespace std;
 using namespace seal;
 
-#define MAX_ITER 100
+#define MAX_ITER 10
 
 int main()
 {
+    srand(time(0));
     /*
     [DATA PREPROCESSING]
     */
     // Read data from csv file
-    auto dataset = ReadDatasetFromCSV(".\\dataset\\train_data.csv");
-    if (dataset.back().size() == 0)
+    auto train_features = ReadDatasetFromCSV(".\\dataset\\diabetes.csv");
+    if (train_features.back().size() == 0)
     {
-        dataset.pop_back();
+        train_features.pop_back();
     }
 
-    auto labels = ExtractLabel(dataset, 1);
-    auto features = dataset;
-    double learning_rate = 0.001;
+    auto labels = ExtractLabel(train_features, 8);
+    double learning_rate = 0.01;
     int iteration = ReadCheckpointFromFile(".\\weights\\iteration.txt");
-    vector<double> weights(features[0].size(), 0);
+    vector<double> weights(train_features[0].size(), rand());
     if (iteration > 1)
     {
         weights = ReadWeightsFromCSV(".\\weights\\weights.csv");
@@ -42,7 +43,7 @@ int main()
     cout << "Are the parameters valid? " << context.parameter_error_message() << endl;
     cout << endl;
 
-    double scale = pow(2.0, 20);
+    double scale = pow(2.0, 40);
     CKKSEncoder encoder(context);
     size_t slot_count = encoder.slot_count();
 
@@ -77,15 +78,15 @@ int main()
     /*
     [HOMOMORPHICALLY TRAIN A LOGISTIC REGRESS MODEL]
     */
-    int total_start = clock();
+    double best_accuracy = 0;
     for (iteration; iteration <= MAX_ITER; ++iteration)
     {
         cout << "Iteration #" << iteration << "...\t\t";
         // Encrypt product of features and weights
         vector<Ciphertext> encrypted_features;
-        for (int i = 0; i < features.size(); ++i)
+        for (int i = 0; i < train_features.size(); ++i)
         {
-            double product = PlainVectorMultiplication(features[i], weights);
+            double product = PlainVectorMultiplication(train_features[i], weights);
             Plaintext plain_product;
             Encode(encoder, product, scale, plain_product);
             Ciphertext encrypted_product = Encrypt(context, public_key, scale, plain_product);
@@ -110,19 +111,24 @@ int main()
         // Decrypt and update new weights in place
         Plaintext plain_trained_weights = Decrypt(context, secret_key, encrypted_trained_weights);
         Decode(context, plain_trained_weights, weights);
-        weights.resize(features[0].size());
+        weights.resize(train_features[0].size());
 
         cout << "Training time: " << (iteration_end - iteration_start) / CLOCKS_PER_SEC << "s\t\t";
-        cout << "Train accuracy: " << ComputeAccuracy(features, labels, weights) << endl;
+        double train_accuracy = ComputeAccuracy(train_features, labels, weights);
+        cout << "Train accuracy: " << train_accuracy << endl;
+
+        if (train_accuracy > best_accuracy)
+        {
+            best_accuracy = train_accuracy;
+            WriteWeightsToCSV(".\\weights\\best_weights.csv", weights);
+        }
 
         WriteCheckpointToFile(".\\weights\\iteration.txt", iteration);
         WriteWeightsToCSV(".\\weights\\weights.csv", weights);
     }
-
-    int total_end = clock();
-    cout << "Trained weights:" << endl;
+    weights = ReadWeightsFromCSV(".\\weights\\best_weights.csv");
+    cout << "Best weights:" << endl;
     print_vector(weights);
-    cout << "Training time: " << (total_end - total_start) / CLOCKS_PER_SEC << "s" << endl;
 
     return 0;
 }
