@@ -11,16 +11,16 @@ env:
 
 jobs:    
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
     
     - name: Download SEAL
       run: |
-        curl "https://github.com/microsoft/SEAL/archive/refs/tags/v3.6.5.zip" -O ${{github.workspace}}/v3.6.5.zip
-        tar -xzf ${{github.workspace}}/v3.6.5.zip
-        dir
+        curl "https://github.com/microsoft/SEAL/archive/refs/tags/v3.6.5.zip" -O v3.6.5.zip
+        unzip v3.6.5.zip
+        cd SEAL-3.6.5
     - name: Install SEAL
       run: |
         cmake -S . -B build
