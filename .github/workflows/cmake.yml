@@ -29,8 +29,8 @@ jobs:
     - name: Install SEAL
       run: |
         cmake -S ${{github.workspace}} -B build
-        cmake --build build
-        sudo cmake --install build
+        # cmake --build build
+        # sudo cmake --install build
         
 
     - name: Configure CMake
