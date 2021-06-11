@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
 project("Homomorphic Encrypt on Logistic Regression")
-configure_file(./SEAL-3.6.5/cmake/SEALConfig.cmake.in)
 
 add_executable(main src/main.cpp)
 
