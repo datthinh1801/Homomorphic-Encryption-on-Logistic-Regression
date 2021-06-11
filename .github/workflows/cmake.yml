@@ -28,7 +28,7 @@ jobs:
         cd SEAL-3.6.5/
     - name: Install SEAL
       run: |
-        cmake -S ${{github.workspace}} -B build
+        cmake -S ${{github.workspace}} -B build -DCMAKE_INSTALL_PREFIX~=${{github.workspace}}/SEAL
         # cmake --build build
         # sudo cmake --install build
         
