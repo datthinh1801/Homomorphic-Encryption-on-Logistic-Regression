@@ -18,11 +18,9 @@ jobs:
     
     - name: Download SEAL
       run: |
-        curl "https://github.com/microsoft/SEAL/archive/refs/tags/v3.6.5.zip" -O "v3.6.5.zip"
+        curl "https://github.com/microsoft/SEAL/archive/refs/tags/v3.6.5.zip" -O ${{github.workspace}}/v3.6.5.zip
+        tar -xzf ${{github.workspace}}/v3.6.5.zip
         dir
-        tar -xzf v3.6.5.zip
-        dir
-        cd SEAL-3.6.5/
     - name: Install SEAL
       run: |
         cmake -S . -B build
