@@ -23,7 +23,7 @@ jobs:
     
     - name: Download SEAL
       run: |
-        curl "https://github.com/microsoft/SEAL/archive/refs/tags/v3.6.5.zip" -O v3.6.5.zip
+        curl "https://github.com/microsoft/SEAL/archive/refs/tags/v3.6.5.zip" -O "v3.6.5.zip"
         tar -xf v3.6.5.zip
         cd SEAL-3.6.5/
     - name: Install SEAL
