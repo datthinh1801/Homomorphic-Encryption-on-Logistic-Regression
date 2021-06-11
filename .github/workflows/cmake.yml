@@ -22,16 +22,16 @@ jobs:
         cd SEAL-3.6.5
     
     - name: Install SEAL
-      run:
+      run: |
         cmake -S . -B build
         cmake --build build --config ${{env.BUILD_TYPE}}
         sudo cmake --install build
 
     - name: Configure CMake
-      run: cmake ${{github.workspace}}
+      run: cmake .
 
     - name: Build
-      run: cmake --build ${{github.workspace}} --config ${{env.BUILD_TYPE}}
+      run: cmake --build . --config ${{env.BUILD_TYPE}}
 
     - name: Test
       working-directory: ${{github.workspace}}/build
