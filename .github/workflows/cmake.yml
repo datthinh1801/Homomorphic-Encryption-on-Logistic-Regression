@@ -27,6 +27,7 @@ jobs:
         tar xf v3.6.5.tar.gz
         cd SEAL-3.6.5/
     - name: Install SEAL
+      run: |
         cmake -S . -B build
         cmake --build build
         sudo cmake --install build
