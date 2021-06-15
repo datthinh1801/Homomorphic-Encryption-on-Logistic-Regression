@@ -24,8 +24,8 @@ jobs:
     - name: Build SEAL
       run: |
         cd ./SEAL-3.6.5
-        cmake -S . -B build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/SEAL --config ${{env.BUILD_TYPE}}
-        cmake --build build
+        cmake -S ${{github.workspace}} -B build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/SEAL
+        cmake --build build --config ${{env.BUILD_TYPE}}
         sudo cmake --install build
         
   
