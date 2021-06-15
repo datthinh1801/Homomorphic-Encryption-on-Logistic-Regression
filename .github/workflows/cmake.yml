@@ -21,9 +21,14 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
+    - name: Rename SEALConfig.cmake.in
+      run: |
+        cd SEAL-3.6.5/cmake
+        cp SEALConfig.cmake.in SEALConfig.cmake
+    
     - name: Build SEAL
       run: |
-        cd ./SEAL-3.6.5
+        cd ${{github.workspace}}/SEAL-3.6.5
         cmake -S ${{github.workspace}} -B build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/SEAL
         cmake --build build --config ${{env.BUILD_TYPE}}
         sudo cmake --install build
