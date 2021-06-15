@@ -23,8 +23,7 @@ jobs:
     
     - name: Rename SEALConfig.cmake.in
       run: |
-        cd SEAL-3.6.5/cmake
-        cp SEALConfig.cmake.in SEALConfig.cmake
+        cp SEALConfig.cmake.in ./SEAL-3.6.5/SEALConfig.cmake
     
     - name: Build SEAL
       run: |
