@@ -9,7 +9,7 @@
 using namespace std;
 using namespace seal;
 
-#define MAX_ITER 100
+#define MAX_ITER 10
 
 int main()
 {
