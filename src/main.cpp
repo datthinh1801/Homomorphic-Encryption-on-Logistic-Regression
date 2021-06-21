@@ -9,7 +9,7 @@
 using namespace std;
 using namespace seal;
 
-#define MAX_ITER 10
+#define MAX_ITER 100
 
 int main()
 {
@@ -129,6 +129,7 @@ int main()
     weights = ReadWeightsFromCSV(".\\weights\\best_weights.csv");
     cout << "Best weights:" << endl;
     print_vector(weights);
+    cout << "Highest accuracy: " << ComputeAccuracy(train_features, labels, weights) << endl;
 
     return 0;
 }
