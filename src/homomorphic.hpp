@@ -350,7 +350,7 @@ Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois
 
         // ----------------------------------------------------------------- //
         // Compute the partial derivative of the weighted sample
-        Ciphertext partial_derivative = PartialDerivative(context, relin_keys, encrypted_sample_x_weights, samples[i], labels[i], scale);
+        Ciphertext partial_derivative = PartialDerivative(context, relin_keys, sigmoid, samples[i], labels[i], scale);
         partial_derivative.scale() = scale;
         // partial_derivative -> Level 1
 
