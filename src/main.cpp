@@ -24,8 +24,9 @@ int main()
         train_features.pop_back();
     }
 
-    auto labels = ExtractLabel(train_features, 8);
+    auto labels = ExtractLabel(train_features, 9);
     double learning_rate = 0.01;
+
     int iteration = ReadCheckpointFromFile(".\\weights\\iteration.txt");
     vector<double> weights(train_features[0].size(), rand());
     if (iteration > 1)
@@ -60,6 +61,16 @@ int main()
     /*
     [DATA PREPARATION FOR HOMOMORPHIC TRAINING]
     */
+    // Encrypt features
+    vector<Ciphertext> encrypted_features;
+    for (int i = 0; i < train_features.size(); ++i)
+    {
+        Plaintext plain_feature;
+        Encode(encoder, train_features[i], scale, plain_feature);
+        Ciphertext encrypted_feature = Encrypt(context, public_key, scale, plain_feature);
+        encrypted_features.push_back((encrypted_feature));
+    }
+
     // Encrypt labels
     vector<Ciphertext> encrypted_labels;
     for (int i = 0; i < labels.size(); ++i)
@@ -83,14 +94,14 @@ int main()
     {
         cout << "Iteration #" << iteration << "...\t\t";
         // Encrypt product of features and weights
-        vector<Ciphertext> encrypted_features;
+        vector<Ciphertext> encrypted_products;
         for (int i = 0; i < train_features.size(); ++i)
         {
             double product = PlainVectorMultiplication(train_features[i], weights);
             Plaintext plain_product;
             Encode(encoder, product, scale, plain_product);
             Ciphertext encrypted_product = Encrypt(context, public_key, scale, plain_product);
-            encrypted_features.push_back(encrypted_product);
+            encrypted_products.push_back(encrypted_product);
         }
 
         // Encrypt weights
@@ -102,7 +113,7 @@ int main()
         unsigned long iteration_start = clock();
 
         // Homomorphically train
-        Ciphertext encrypted_trained_weights = Train(context, relin_keys, galois_keys, scale, encrypted_features, encrypted_labels, encrypted_weights,
+        Ciphertext encrypted_trained_weights = Train(context, relin_keys, galois_keys, scale, encrypted_products, encrypted_features, encrypted_labels, encrypted_weights,
                                                      encrypted_learning_rate, slot_count);
 
         // End training
