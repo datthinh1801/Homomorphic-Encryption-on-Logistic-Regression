@@ -29,7 +29,7 @@ double ComputeAccuracy(const vector<vector<double>> &features, const vector<doub
     {
         result[i] = PlainSigmoid(features[i], weights);
 
-        if (result[i] == labels[i])
+        if (round(result[i]) == labels[i])
         {
             ++correct;
         }
