@@ -315,7 +315,8 @@ Ciphertext SumPartialDerivative(SEALContext &context, RelinKeys &relin_keys, con
 
 // This algorithm is only able to train 1 iteration at a time due to incompatible levels of operands at the end of the algorithm.
 // This function return the new adjusted encrypted weights parameter.
-Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois_keys, double scale, const vector<Ciphertext> &samples, const vector<Ciphertext> &labels,
+Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois_keys, double scale, const vector<Ciphertext> &encrypted_products,
+                 const vector<Ciphertext> &samples, const vector<Ciphertext> &labels,
                  const Ciphertext &weight, const Ciphertext &learning_rate, size_t slot_count)
 {
     Evaluator evaluator(context);
@@ -339,7 +340,7 @@ Ciphertext Train(SEALContext &context, RelinKeys &relin_keys, GaloisKeys &galois
     for (size_t i = 0; i < samples.size(); ++i)
     {
         // ----------------------------------------------------------------- //
-        Ciphertext encrypted_sample_x_weights = samples[i];
+        Ciphertext encrypted_sample_x_weights = encrypted_products[i];
         // encrypted_sample_x_weights -> Level 5
 
         // ----------------------------------------------------------------- //
