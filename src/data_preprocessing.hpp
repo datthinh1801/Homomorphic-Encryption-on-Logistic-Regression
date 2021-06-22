@@ -21,6 +21,9 @@ vector<vector<double>> ReadDatasetFromCSV(string filename)
     {
         row.clear();
 
+        // Add bias
+        row.push_back(1);
+
         // read 1 line
         getline(fin, line);
 
