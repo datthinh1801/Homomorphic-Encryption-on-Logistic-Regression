@@ -5,7 +5,7 @@ This is my cryptology project collaborated with [xuanninh1412](https://github.co
 | Quality | Status |
 |---|---|
 | codefactor |  <img src="https://www.codefactor.io/repository/github/datthinh1801/homomorphic-encryption-on-logistic-regression/badge"> |
-| codacy | <a href="https://www.codacy.com/gh/datthinh1801/Homomorphic-Encryption-on-Logistic-Regression/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=datthinh1801/Homomorphic-Encryption-on-Logistic-Regression&amp;utm_campaign=Badge_Grade"><img src="https://app.codacy.com/project/badge/Grade/adf5baa0481e40caa553f59403738698"/></a> |
+| code quality | <a href="https://www.codacy.com/gh/datthinh1801/Homomorphic-Encryption-on-Logistic-Regression/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=datthinh1801/Homomorphic-Encryption-on-Logistic-Regression&amp;utm_campaign=Badge_Grade"><img src="https://app.codacy.com/project/badge/Grade/adf5baa0481e40caa553f59403738698"/></a> |
 
 # Introduction
 ## Core concepts
