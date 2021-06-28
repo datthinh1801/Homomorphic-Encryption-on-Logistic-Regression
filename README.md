@@ -1,6 +1,12 @@
 # Homomorphic encryption on logistic engression
 This is my cryptology project collaborated with [xuanninh1412](https://github.com/xuanninh1412).  
 
+### Code quality checks
+| Criteria | Status |
+|---|---|
+| codefactor |  <img src="https://www.codefactor.io/repository/github/datthinh1801/homomorphic-encryption-on-logistic-regression/badge"> |
+| code quality | <a href="https://www.codacy.com/gh/datthinh1801/Homomorphic-Encryption-on-Logistic-Regression/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=datthinh1801/Homomorphic-Encryption-on-Logistic-Regression&amp;utm_campaign=Badge_Grade"><img src="https://app.codacy.com/project/badge/Grade/adf5baa0481e40caa553f59403738698"/></a> |
+
 # Introduction
 ## Core concepts
 Most encryption schemes consist of three functionalities: key generation, encryption, and decryption. Symmetric-key encryption schemes use the same secret key for both encryption and decryption; public-key encryption schemes use separately a public key for encryption and a secret key for decryption. Therefore, public-key encryption schemes allow anyone who knows the public key to encrypt data, but only those who know the secret key can decrypt and read the data. Symmetric-key encryption can be used for efficiently encrypting very large amounts of data, and enables secure outsourced cloud storage. Public-key encryption is a fundamental concept that enables secure online communication today, but is typically much less efficient than symmetric-key encryption.
