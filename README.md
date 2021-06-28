@@ -1,4 +1,4 @@
-# Homomorphic encryption on logistic engression
+# Homomorphic encryption on logistic regression
 This is my cryptology project collaborated with [xuanninh1412](https://github.com/xuanninh1412).  
 
 ### Code quality checks
