@@ -18,7 +18,7 @@ int main()
     [DATA PREPROCESSING]
     */
     // Read data from csv file
-    auto train_features = ReadDatasetFromCSV(".\\dataset\\diabetes.csv");
+    auto train_features = ReadDatasetFromCSV(".\\dataset\\diabetes_normalized.csv");
     if (train_features.back().size() == 0)
     {
         train_features.pop_back();
