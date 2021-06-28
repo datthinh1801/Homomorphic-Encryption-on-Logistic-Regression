@@ -115,6 +115,5 @@ vector<double> ExtractLabel(vector<vector<double>> &dataset, int col_idx)
         labels.push_back(dataset[i][col_idx]);
         dataset[i].erase(dataset[i].begin() + col_idx);
     }
-
     return labels;
 }
